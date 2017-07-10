@@ -13,7 +13,7 @@ We uses a brute force way to solve this problem:
 
 For pod created/controlled by ReplicationController/ReplicaSet, we have to manipulate ReplicationController/ReplicaSet, 
 so that we can create a Pod according to our requirement. The way to achieve this is the [same trick](https://github.com/songbinliu/movePod) when we want to move Pod 
-to a specified node. It should be noted that we won't assign a node for the pod, but let the scheduler to assign a node for this Pod.
+to a specified node. ~~It should be noted that we won't assign a node for the pod, but let the scheduler to assign a node for this Pod.~~
 
 
 ## Run it ##
@@ -22,7 +22,8 @@ to a specified node. It should be noted that we won't assign a node for the pod,
 ```
 
 
-## drawbacks ##
-It has to stop the Pod for a while.
+## Drawbacks ##
+(1) Have to stop the Pod for a while;
+(2) The newly created Pod will be on the original Node. If there is not enough resource, the pod will fail to run.
 
 See also [Vertical Pod Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler/updater)
