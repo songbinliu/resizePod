@@ -7,12 +7,12 @@ import (
 
 	"github.com/golang/glog"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	client "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 const (
@@ -291,8 +291,34 @@ func updateLimit(pod *v1.Pod, resource v1.ResourceName, num resource.Quantity) b
 		}
 	}
 
+	if p.Resources.Requests != nil {
+		if oldreq, ok := p.Resources.Requests[resource]; ok {
+			if num.Cmp(oldreq) < 0 {
+				p.Resources.Requests[resource] = num
+			}
+		}
+	}
+
 	p.Resources.Limits[resource] = num
 	return true
+}
+
+func updateResource(pod *v1.Pod, req *Request) bool {
+
+	flag := false
+	if !(req.cpuLimit.IsZero()) {
+		tmp := updateLimit(pod, v1.ResourceCPU, req.cpuLimit)
+		glog.V(2).Infof("update cpu: %s %s, result=[%v]", pod.Name, req.cpuLimit.String(), tmp)
+		flag = flag || tmp
+	}
+
+	if !(req.memLimit.IsZero()) {
+		tmp := updateLimit(pod, v1.ResourceMemory, req.memLimit)
+		glog.V(2).Infof("update mem: %s %s, result=[%v]", pod.Name, req.memLimit.String(), tmp)
+		flag = flag || tmp
+	}
+
+	return flag
 }
 
 // move pod nameSpace/podName to node nodeName
@@ -311,18 +337,8 @@ func resizePod(client *client.Clientset, pod *v1.Pod, req *Request) error {
 	npod := &v1.Pod{}
 	copyPodInfoX(pod, npod)
 	npod.Spec.NodeName = pod.Spec.NodeName
-	flag := false
-	if !(req.cpuLimit.IsZero()) {
-		tmp := updateLimit(pod, v1.ResourceCPU, req.cpuLimit)
-		glog.V(2).Infof("update cpu: %s %s, result=[%v]", pod.Name, req.cpuLimit.String(), tmp)
-		flag = flag || tmp
-	}
-	if !(req.memLimit.IsZero()) {
-		tmp := updateLimit(pod, v1.ResourceMemory, req.memLimit)
-		glog.V(2).Infof("update mem: %s %s, result=[%v]", pod.Name, req.memLimit.String(), tmp)
-		flag = flag || tmp
-	}
-	if !flag {
+
+	if flag := updateResource(pod, req); !flag {
 		glog.V(2).Infof("no need to resize Pod-container:%s", id)
 		return nil
 	}
