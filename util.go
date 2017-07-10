@@ -354,6 +354,8 @@ func resizePod(client *client.Clientset, pod *v1.Pod, req *Request) error {
 		return err
 	}
 
+	//time.Sleep(time.Second * 20)
+
 	//3. create (and bind) the new Pod
 	//glog.V(2).Infof("sleep 10 seconds to test the behaivor of quicker ReplicationController")
 	//time.Sleep(time.Second * 10) // this line is for experiments
