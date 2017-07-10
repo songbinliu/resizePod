@@ -17,3 +17,8 @@ to a specified node. It should be noted that we won't assign a node for the pod,
 
 ## drawbacks ##
 It has to stop the Pod for a while.
+
+## Run it ##
+```console
+./resizePod --kubeConfig configs/aws.kubeconfig.yaml --v 3 --nameSpace default --podName mem-deployment-4234284026-lgtkc --memLimit 400 --cpuLimit 100
+```
