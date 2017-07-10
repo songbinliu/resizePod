@@ -8,8 +8,8 @@ There was some discussion about this [request](https://github.com/kubernetes/kub
 
 ## Solution ##
 We uses a brute force way to solve this problem: 
-* first, delete the orginial Pod; 
-* second, create a new Pod with most of pod.Spec copied from the original Pod, but with new resoure settings.
+* First, delete the orginial Pod; 
+* Second, create a new Pod with most of pod.Spec copied from the original Pod, but with new resoure settings.
 
 For pod created/controlled by ReplicationController/ReplicaSet, we have to manipulate ReplicationController/ReplicaSet, 
 so that we can create a Pod according to our requirement. The way to achieve this is the [same trick](https://github.com/songbinliu/movePod) when we want to move Pod 
