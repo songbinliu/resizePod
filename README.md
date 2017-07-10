@@ -15,10 +15,14 @@ For pod created/controlled by ReplicationController/ReplicaSet, we have to manip
 so that we can create a Pod according to our requirement. The way to achieve this is the [same trick](https://github.com/songbinliu/movePod) when we want to move Pod 
 to a specified node. It should be noted that we won't assign a node for the pod, but let the scheduler to assign a node for this Pod.
 
-## drawbacks ##
-It has to stop the Pod for a while.
 
 ## Run it ##
 ```console
 ./resizePod --kubeConfig configs/aws.kubeconfig.yaml --v 3 --nameSpace default --podName mem-deployment-4234284026-lgtkc --memLimit 400 --cpuLimit 100
 ```
+
+
+## drawbacks ##
+It has to stop the Pod for a while.
+
+See also [Vertical Pod Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler/updater)
