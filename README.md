@@ -24,6 +24,6 @@ to a specified node. ~~It should be noted that we won't assign a node for the po
 
 ## Drawbacks ##
 * (1) Have to stop the Pod for a while;
-* (2) The newly created Pod will be on the original Node. If there is not enough resource, the pod will fail to run.
+* (2) If the pod is controlled by ReplicationController/ReplicaSet, then the newly created Pod will be on the original Node. If there is not enough resource, the pod will fail to run.
 
 See also [Vertical Pod Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler/updater)
