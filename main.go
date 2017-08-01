@@ -180,4 +180,5 @@ func main() {
 	}
 
 	glog.V(2).Infof("resize pod(%v/%v) successfully", nameSpace, podName)
+	glog.V(2).Info("exiting)
 }
