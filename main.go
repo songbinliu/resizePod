@@ -6,10 +6,10 @@ import (
 	"github.com/golang/glog"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kclient "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 //global variables
@@ -154,7 +154,7 @@ func main() {
 	}
 
 	request := &Request{cpuLimit: resource.MustParse(fmt.Sprintf("%dm", cpuLimit)),
-						memLimit: resource.MustParse(fmt.Sprintf("%dMi", memLimit))}
+		memLimit: resource.MustParse(fmt.Sprintf("%dMi", memLimit))}
 
 	kubeClient := getKubeClient(&masterUrl, &kubeConfig)
 	if kubeClient == nil {
@@ -180,4 +180,5 @@ func main() {
 	}
 
 	glog.V(2).Infof("resize pod(%v/%v) successfully", nameSpace, podName)
+	return
 }
