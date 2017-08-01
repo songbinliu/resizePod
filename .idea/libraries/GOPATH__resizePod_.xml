@@ -1,0 +1,74 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;resizePod&gt;">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../httpc" />
+      <root url="file://$PROJECT_DIR$/../golang.org" />
+      <root url="file://$PROJECT_DIR$/../reflectorTest" />
+      <root url="file://$PROJECT_DIR$/../gopkg.in" />
+      <root url="file://$PROJECT_DIR$/../google.golang.org" />
+      <root url="file://$PROJECT_DIR$/../flaglog" />
+      <root url="file://$PROJECT_DIR$/../reflectTest" />
+      <root url="file://$PROJECT_DIR$/../cadvisor" />
+      <root url="file://$PROJECT_DIR$/../https" />
+      <root url="file://$PROJECT_DIR$/../go.pedge.io" />
+      <root url="file://$PROJECT_DIR$/../go4.org" />
+      <root url="file://$PROJECT_DIR$/../KubeReflectorTest" />
+      <root url="file://$PROJECT_DIR$/../testflag" />
+      <root url="file://$PROJECT_DIR$/../defaultscheduler" />
+      <root url="file://$PROJECT_DIR$/../bitbucket.org" />
+      <root url="file://$PROJECT_DIR$/../jsontest" />
+      <root url="file://$PROJECT_DIR$/../cloud.google.com" />
+      <root url="file://$PROJECT_DIR$/../KubeControllerTest" />
+      <root url="file://$PROJECT_DIR$/../kubeclient" />
+      <root url="file://$PROJECT_DIR$/../controllerTest" />
+      <root url="file://$PROJECT_DIR$/../k8s.io" />
+      <root url="file://$PROJECT_DIR$/../threadpool" />
+      <root url="file://$PROJECT_DIR$/../updatekube" />
+      <root url="file://$PROJECT_DIR$/../hello" />
+      <root url="file://$PROJECT_DIR$/../vbom.ml" />
+      <root url="file://$PROJECT_DIR$/../protobuf-test" />
+      <root url="file://$PROJECT_DIR$/../movePod" />
+      <root url="file://$PROJECT_DIR$/../github.com" />
+      <root url="file://$PROJECT_DIR$/../mvPod" />
+      <root url="file://$PROJECT_DIR$/../stressHttpClient" />
+      <root url="file://$PROJECT_DIR$/../proxy" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../httpc" />
+      <root url="file://$PROJECT_DIR$/../golang.org" />
+      <root url="file://$PROJECT_DIR$/../reflectorTest" />
+      <root url="file://$PROJECT_DIR$/../gopkg.in" />
+      <root url="file://$PROJECT_DIR$/../google.golang.org" />
+      <root url="file://$PROJECT_DIR$/../flaglog" />
+      <root url="file://$PROJECT_DIR$/../reflectTest" />
+      <root url="file://$PROJECT_DIR$/../cadvisor" />
+      <root url="file://$PROJECT_DIR$/../https" />
+      <root url="file://$PROJECT_DIR$/../go.pedge.io" />
+      <root url="file://$PROJECT_DIR$/../go4.org" />
+      <root url="file://$PROJECT_DIR$/../KubeReflectorTest" />
+      <root url="file://$PROJECT_DIR$/../testflag" />
+      <root url="file://$PROJECT_DIR$/../defaultscheduler" />
+      <root url="file://$PROJECT_DIR$/../bitbucket.org" />
+      <root url="file://$PROJECT_DIR$/../jsontest" />
+      <root url="file://$PROJECT_DIR$/../cloud.google.com" />
+      <root url="file://$PROJECT_DIR$/../KubeControllerTest" />
+      <root url="file://$PROJECT_DIR$/../kubeclient" />
+      <root url="file://$PROJECT_DIR$/../controllerTest" />
+      <root url="file://$PROJECT_DIR$/../k8s.io" />
+      <root url="file://$PROJECT_DIR$/../threadpool" />
+      <root url="file://$PROJECT_DIR$/../updatekube" />
+      <root url="file://$PROJECT_DIR$/../hello" />
+      <root url="file://$PROJECT_DIR$/../vbom.ml" />
+      <root url="file://$PROJECT_DIR$/../protobuf-test" />
+      <root url="file://$PROJECT_DIR$/../movePod" />
+      <root url="file://$PROJECT_DIR$/../github.com" />
+      <root url="file://$PROJECT_DIR$/../mvPod" />
+      <root url="file://$PROJECT_DIR$/../stressHttpClient" />
+      <root url="file://$PROJECT_DIR$/../proxy" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
