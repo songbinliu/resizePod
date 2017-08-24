@@ -144,9 +144,8 @@ func ResizePod(client *kclient.Clientset, nameSpace, podName string, req *Reques
 	return nil
 }
 
-func main() {
-	setFlags()
-	defer glog.Flush()
+
+func testResize(client *kclient.Clientset) {
 
 	if cpuLimit <= 0 && memLimit <= 0 {
 		glog.Errorf("cpuLimit=[%d], memLimit=[%d]", cpuLimit, memLimit)
@@ -155,6 +154,26 @@ func main() {
 
 	request := &Request{cpuLimit: resource.MustParse(fmt.Sprintf("%dm", cpuLimit)),
 		memLimit: resource.MustParse(fmt.Sprintf("%dMi", memLimit))}
+
+	if err := ResizePod(client, nameSpace, podName, request); err != nil {
+		glog.Errorf("move pod failed: %v/%v, %v", nameSpace, podName, err.Error())
+		return
+	}
+
+	glog.V(2).Infof("sleep 10 seconds to check the final state")
+	time.Sleep(time.Second * 10)
+	if err := checkPodHealth(client, nameSpace, podName); err != nil {
+		glog.Errorf("move pod failed: %v", err.Error())
+		return
+	}
+
+	glog.V(2).Infof("resize pod(%v/%v) successfully", nameSpace, podName)
+}
+
+func main() {
+	setFlags()
+	defer glog.Flush()
+
 
 	kubeClient := getKubeClient(&masterUrl, &kubeConfig)
 	if kubeClient == nil {
@@ -167,18 +186,7 @@ func main() {
 		return
 	}
 
-	if err := ResizePod(kubeClient, nameSpace, podName, request); err != nil {
-		glog.Errorf("move pod failed: %v/%v, %v", nameSpace, podName, err.Error())
-		return
-	}
-
-	glog.V(2).Infof("sleep 10 seconds to check the final state")
-	time.Sleep(time.Second * 10)
-	if err := checkPodHealth(kubeClient, nameSpace, podName); err != nil {
-		glog.Errorf("move pod failed: %v", err.Error())
-		return
-	}
-
-	glog.V(2).Infof("resize pod(%v/%v) successfully", nameSpace, podName)
+	//PrintPodResource(kubeClient, nameSpace, podName)
+	testResize(kubeClient)
 	return
 }

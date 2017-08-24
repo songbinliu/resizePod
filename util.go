@@ -370,24 +370,53 @@ func resizePod(client *client.Clientset, pod *v1.Pod, req *Request) error {
 	return nil
 }
 
-func checkPodHealth(client *client.Clientset, nameSpace, podName string) error {
-	podClient := client.CoreV1().Pods(nameSpace)
-
-	id := fmt.Sprintf("%v/%v", nameSpace, podName)
-
-	getOption := metav1.GetOptions{}
-	pod, err := podClient.Get(podName, getOption)
+func checkPodHealth(kclient *client.Clientset, nameSpace, podName string) error {
+	pod, err := GetPod(kclient, nameSpace, podName)
 	if err != nil {
-		err = fmt.Errorf("failed ot get Pod-%v: %v", id, err.Error())
-		glog.Error(err.Error())
+		glog.Errorf("failed to check Pod[%s] health: %v", podName, err)
 		return err
 	}
 
 	if pod.Status.Phase != v1.PodRunning {
-		err = fmt.Errorf("pod-%v is not running: %v", id, pod.Status.Phase)
+		err = fmt.Errorf("pod-%v is not running: %v", podName, pod.Status.Phase)
 		glog.Error(err.Error())
 		return err
 	}
 
 	return nil
+}
+
+func GetPod(kclient *client.Clientset, nameSpace, name string) (*v1.Pod, error) {
+	podClient := kclient.CoreV1().Pods(nameSpace)
+	id := fmt.Sprintf("%v/%v", nameSpace, name)
+
+	getOption := metav1.GetOptions{}
+	pod, err := podClient.Get(name, getOption)
+	if err != nil {
+		err = fmt.Errorf("failed ot get Pod-%v: %v", id, err)
+		glog.Error(err.Error())
+		return nil, err
+	}
+
+	return pod, nil
+}
+
+
+func printResourceList(rlist v1.ResourceList) {
+	for k, v := range rlist {
+		fmt.Printf("k=%s, v=[%++v]\n", k, v)
+	}
+}
+
+func PrintPodResource(kclient *client.Clientset, nameSpace, podName string) {
+	pod, err := GetPod(kclient, nameSpace, podName)
+	if err != nil {
+		glog.Errorf("failed to get Pod[%s]: %v", podName, err)
+		return
+	}
+
+	container := &(pod.Spec.Containers[0])
+	printResourceList(container.Resources.Limits)
+	printResourceList(container.Resources.Requests)
+	return
 }
