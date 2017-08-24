@@ -49,11 +49,6 @@ func setFlags() {
 	fmt.Printf("kubeConfig=%s, cpu=%d, pod=%s\n", kubeConfig, cpuLimit, podName)
 }
 
-type Request struct {
-	memLimit resource.Quantity
-	cpuLimit resource.Quantity
-}
-
 func addErrors(prefix string, err1, err2 error) error {
 	rerr := fmt.Errorf("%v ", prefix)
 	if err1 != nil {
@@ -69,7 +64,7 @@ func addErrors(prefix string, err1, err2 error) error {
 }
 
 // update the parent's scheduler before moving pod; then restore parent's scheduler
-func doSchedulerResize(client *kclient.Clientset, pod *v1.Pod, parentKind, parentName string, req *Request) error {
+func doSchedulerResize(client *kclient.Clientset, pod *v1.Pod, parentKind, parentName string, req v1.ResourceList) error {
 	id := fmt.Sprintf("%v/%v", pod.Namespace, pod.Name)
 	//2. update the schedulerName
 	var update func(*kclient.Clientset, string, string, string) (string, error)
@@ -108,7 +103,7 @@ func doSchedulerResize(client *kclient.Clientset, pod *v1.Pod, parentKind, paren
 	return resizePod(client, pod, req)
 }
 
-func ResizePod(client *kclient.Clientset, nameSpace, podName string, req *Request) error {
+func ResizePod(client *kclient.Clientset, nameSpace, podName string, req v1.ResourceList) error {
 	podClient := client.CoreV1().Pods(nameSpace)
 	id := fmt.Sprintf("%v/%v", nameSpace, podName)
 
@@ -144,16 +139,35 @@ func ResizePod(client *kclient.Clientset, nameSpace, podName string, req *Reques
 	return nil
 }
 
-
-func testResize(client *kclient.Clientset) {
-
+func parseInputLimit() (v1.ResourceList, error) {
 	if cpuLimit <= 0 && memLimit <= 0 {
-		glog.Errorf("cpuLimit=[%d], memLimit=[%d]", cpuLimit, memLimit)
-		return
+		err := fmt.Errorf("cpuLimit=[%d], memLimit=[%d]", cpuLimit, memLimit)
+		glog.Error(err)
+		return nil, err
 	}
 
-	request := &Request{cpuLimit: resource.MustParse(fmt.Sprintf("%dm", cpuLimit)),
-		memLimit: resource.MustParse(fmt.Sprintf("%dMi", memLimit))}
+	result := make(v1.ResourceList)
+	if cpuLimit > 0 {
+		result[v1.ResourceCPU] = resource.MustParse(fmt.Sprintf("%dm", cpuLimit))
+	}
+	if memLimit > 0 {
+		result[v1.ResourceMemory] = resource.MustParse(fmt.Sprintf("%dMi", memLimit))
+	}
+
+	if cpu, exist := result[v1.ResourceCPU]; exist {
+		glog.V(2).Infof("cpu: %+v, %v", cpu, cpu.MilliValue())
+	}
+	if mem, exist := result[v1.ResourceMemory]; exist {
+		glog.V(2).Infof("memory: %+v, %v", mem, mem.Value())
+	}
+	return result, nil
+}
+
+func testResize(client *kclient.Clientset) {
+	request, err := parseInputLimit()
+	if err != nil {
+		return
+	}
 
 	if err := ResizePod(client, nameSpace, podName, request); err != nil {
 		glog.Errorf("move pod failed: %v/%v, %v", nameSpace, podName, err.Error())
@@ -186,7 +200,10 @@ func main() {
 		return
 	}
 
-	//PrintPodResource(kubeClient, nameSpace, podName)
+	parseInputLimit()
+
+	PrintPodResource(kubeClient, nameSpace, podName)
 	testResize(kubeClient)
+	PrintPodResource(kubeClient, nameSpace, podName)
 	return
 }

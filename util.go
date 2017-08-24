@@ -7,12 +7,12 @@ import (
 
 	"github.com/golang/glog"
 
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	client "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 const (
@@ -277,52 +277,8 @@ func updateRCscheduler(client *client.Clientset, nameSpace, rcName, schedulerNam
 	return currentName, nil
 }
 
-//update the resource Limit of the first Container of the Pod
-func updateLimit(pod *v1.Pod, resource v1.ResourceName, num resource.Quantity) bool {
-	p := &(pod.Spec.Containers[0])
-
-	if p.Resources.Limits == nil {
-		p.Resources.Limits = make(v1.ResourceList)
-	}
-
-	if old, ok := p.Resources.Limits[resource]; ok {
-		if num.Cmp(old) == 0 {
-			return false
-		}
-	}
-
-	if p.Resources.Requests != nil {
-		if oldreq, ok := p.Resources.Requests[resource]; ok {
-			if num.Cmp(oldreq) < 0 {
-				p.Resources.Requests[resource] = num
-			}
-		}
-	}
-
-	p.Resources.Limits[resource] = num
-	return true
-}
-
-func updateResource(pod *v1.Pod, req *Request) bool {
-
-	flag := false
-	if !(req.cpuLimit.IsZero()) {
-		tmp := updateLimit(pod, v1.ResourceCPU, req.cpuLimit)
-		glog.V(2).Infof("update cpu: %s %s, result=[%v]", pod.Name, req.cpuLimit.String(), tmp)
-		flag = flag || tmp
-	}
-
-	if !(req.memLimit.IsZero()) {
-		tmp := updateLimit(pod, v1.ResourceMemory, req.memLimit)
-		glog.V(2).Infof("update mem: %s %s, result=[%v]", pod.Name, req.memLimit.String(), tmp)
-		flag = flag || tmp
-	}
-
-	return flag
-}
-
 // move pod nameSpace/podName to node nodeName
-func resizePod(client *client.Clientset, pod *v1.Pod, req *Request) error {
+func resizePod(client *client.Clientset, pod *v1.Pod, req v1.ResourceList) error {
 	podClient := client.CoreV1().Pods(pod.Namespace)
 	if podClient == nil {
 		err := fmt.Errorf("cannot get Pod client for nameSpace:%v", pod.Namespace)
@@ -338,10 +294,18 @@ func resizePod(client *client.Clientset, pod *v1.Pod, req *Request) error {
 	copyPodInfoX(pod, npod)
 	npod.Spec.NodeName = pod.Spec.NodeName
 
-	if flag := updateResource(pod, req); !flag {
+	if flag, err := updateCapacity(pod, req, 0); err != nil || !flag {
+	//if flag, err := updateResource(pod, req); err != nil || !flag {
+		if err != nil {
+			glog.Errorf("failed to updateResource: %v", err)
+			return err
+		}
 		glog.V(2).Infof("no need to resize Pod-container:%s", id)
 		return nil
 	}
+	container := &(npod.Spec.Containers[0])
+	printResourceList("mid-limits", container.Resources.Limits)
+	printResourceList("mid-request", container.Resources.Requests)
 
 	//2. kill original pod
 	var grace int64 = 0
@@ -353,7 +317,6 @@ func resizePod(client *client.Clientset, pod *v1.Pod, req *Request) error {
 		glog.Error(err.Error())
 		return err
 	}
-
 	//time.Sleep(time.Second * 20)
 
 	//3. create (and bind) the new Pod
@@ -402,10 +365,14 @@ func GetPod(kclient *client.Clientset, nameSpace, name string) (*v1.Pod, error) 
 }
 
 
-func printResourceList(rlist v1.ResourceList) {
-	for k, v := range rlist {
-		fmt.Printf("k=%s, v=[%++v]\n", k, v)
-	}
+func printResourceList(prefix string, rlist v1.ResourceList) {
+	//for k, v := range rlist {
+	//	fmt.Printf("k=%s, v=[%++v], %v\n", k, v, v.Value())
+	//}
+
+	cpu := rlist.Cpu().MilliValue()
+	mem := rlist.Memory().Value()
+	glog.V(2).Infof("[%s] cpu: %v Mhz, mem: %v Bytes", prefix, cpu, mem)
 }
 
 func PrintPodResource(kclient *client.Clientset, nameSpace, podName string) {
@@ -416,7 +383,73 @@ func PrintPodResource(kclient *client.Clientset, nameSpace, podName string) {
 	}
 
 	container := &(pod.Spec.Containers[0])
-	printResourceList(container.Resources.Limits)
-	printResourceList(container.Resources.Requests)
+	printResourceList("limits", container.Resources.Limits)
+	printResourceList("requests", container.Resources.Requests)
 	return
+}
+
+
+// update the Pod.Containers[index]'s Resources.Limits and Resources.Requests.
+func updateCapacity(pod *v1.Pod, patchCapacity v1.ResourceList, index int) (bool, error) {
+	glog.V(2).Infof("begin to update Capacity.")
+	changed := false
+
+	if index >= len(pod.Spec.Containers) {
+		err := fmt.Errorf("Cannot find container[%d] in pod[%s]", index, pod.Name)
+		glog.Error(err)
+		return false, err
+	}
+	container := &(pod.Spec.Containers[index])
+
+	//1. get the original capacities
+	result := make(v1.ResourceList)
+	for k, v := range container.Resources.Limits {
+		result[k] = v
+	}
+
+	//2. apply the patch
+	for k, v := range patchCapacity {
+		oldv, exist := result[k]
+		if !exist || oldv.Cmp(v) != 0 {
+			result[k] = v
+			changed = true
+		}
+	}
+
+	if !changed {
+		return false, nil
+	}
+	container.Resources.Limits = result
+
+	//3. adjust the requirements: if new capacity is less than requirement, reduce the requirement
+	// TODO 1: discuss reduce the requirement, or increase the limit?
+	// TODO 2: If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+	//      we have to set a value for the requests; how to decide the value?
+
+	updateRequests(container, result)
+	return changed, nil
+}
+
+func updateRequests(container *v1.Container, limits v1.ResourceList) error {
+	zero := resource.NewQuantity(0, resource.BinarySI)
+	glog.V(2).Infof("zero=%++v", zero)
+
+	if container.Resources.Requests == nil {
+		container.Resources.Requests = make(v1.ResourceList)
+	}
+	requests := container.Resources.Requests
+
+	for k, v := range limits {
+		rv, exist := requests[k]
+		if !exist {
+			requests[k] = *zero
+			continue
+		}
+
+		if rv.Cmp(v) > 0 {
+			requests[k] = v
+		}
+	}
+
+	return nil
 }
