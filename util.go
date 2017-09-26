@@ -154,10 +154,12 @@ func getKubeClient(masterUrl, kubeConfig *string) *client.Clientset {
 	} else {
 		config, err = clientcmd.BuildConfigFromFlags(*masterUrl, "")
 	}
-
 	if err != nil {
 		panic(err.Error())
 	}
+
+	glog.V(2).Infof("rest.config=%++v", config)
+
 	// creates the clientset
 	clientset, err := client.NewForConfig(config)
 	if err != nil {
@@ -387,7 +389,6 @@ func PrintPodResource(kclient *client.Clientset, nameSpace, podName string) {
 	printResourceList("requests", container.Resources.Requests)
 	return
 }
-
 
 // update the Pod.Containers[index]'s Resources.Limits and Resources.Requests.
 func updateCapacity(pod *v1.Pod, patchCapacity v1.ResourceList, index int) (bool, error) {

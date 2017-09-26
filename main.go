@@ -203,7 +203,7 @@ func main() {
 	parseInputLimit()
 
 	PrintPodResource(kubeClient, nameSpace, podName)
-	testResize(kubeClient)
-	PrintPodResource(kubeClient, nameSpace, podName)
+	//testResize(kubeClient)
+	//PrintPodResource(kubeClient, nameSpace, podName)
 	return
 }
